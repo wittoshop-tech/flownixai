@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini</title>
+</head>
+<body>
+
+    <h3>Gemini AI</h3>
+
+    <label for="prompt">Вопрос:</label><br>
+    <textarea id="prompt" rows="5" cols="22"></textarea>
+    <br><br>
+
+    <button type="button" id="sendBtn" onclick="askGemini()">Спросить</button>
+    <hr>
+
+    <b>Статус:</b> <span id="status">Готов</span><br><br>
+    <b>Ответ:</b>
+    <div id="result"><i>Здесь появится ответ</i></div>
+
+    <script>
+        // Робот GitHub сам заменит эту метку на ваш секрет при сборке:
+        var API_KEY = "__API_KEY__";
+
+        function askGemini() {
+            var prompt = document.getElementById('prompt').value.trim();
+            var status = document.getElementById('status');
+            var result = document.getElementById('result');
+            var sendBtn = document.getElementById('sendBtn');
+
+            if (!prompt) {
+                alert("Напишите вопрос!");
+                return;
+            }
+
+            sendBtn.disabled = true;
+            status.textContent = "Gemini думает...";
+            result.textContent = "";
+
+            var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + encodeURIComponent(API_KEY);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", url, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    sendBtn.disabled = false;
+                    if (xhr.status === 200) {
+                        try {
+                            var data = JSON.parse(xhr.responseText);
+                            var text = data.candidates[0].content.parts[0].text;
+                            status.textContent = "Готово!";
+                            result.innerHTML = '<pre style="white-space: pre-wrap; font-family: inherit;">' + text + '</pre>';
+                        } catch(e) {
+                            status.textContent = "Ошибка чтения";
+                            result.textContent = xhr.responseText;
+                        }
+                    } else {
+                        status.textContent = "Ошибка " + xhr.status;
+                        result.textContent = xhr.responseText;
+                    }
+                }
+            };
+
+            xhr.send(JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            }));
+        }
+    </script>
+</body>
+</html>
